@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:task_10/model.dart';
 
@@ -17,51 +16,67 @@ class _TransactionListPageState extends State<TransactionListPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Finances')),
-      body: ValueListenableBuilder(
-        valueListenable: box.listenable(),
-        builder: (context, Box<Transaction> transactions, _) {
-          final list = transactions.values.toList().reversed.toList();
+      body: transactionsList(box),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddTransactionDialog(context),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
 
-          final balances = <Currency, double>{
-            Currency.uah: 1000,
-            Currency.usd: 1000,
-            Currency.eur: 1000,
-          };
+  ValueListenableBuilder<Box<Transaction>> transactionsList(Box<Transaction> box) {
+    return ValueListenableBuilder(
+      valueListenable: box.listenable(),
+      builder: (context, Box<Transaction> transactions, _) {
+        final list = transactions.values.toList().reversed.toList();
 
-          for (final tx in list) {
-            balances[tx.currency] = (balances[tx.currency] ?? 0) +
-                (tx.type == TransactionType.income ? tx.amount : -tx.amount);
-          }
+        final balances = <Currency, double>{
+          Currency.uah: 1000,
+          Currency.usd: 1000,
+          Currency.eur: 1000,
+        };
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: Currency.values.map((currency) {
-                    final balance = balances[currency]!;
-                    return Column(
-                      children: [
-                        Text('${currency.code}:',
-                            style: const TextStyle(fontWeight: FontWeight.bold)),
-                        Text(
-                          '${balance.toStringAsFixed(2)} ${currency.symbol}',
-                          style: TextStyle(
-                            color: balance >= 0 ? Colors.green : Colors.red,
-                            fontWeight: FontWeight.bold,
+        for (final tx in list) {
+          balances[tx.currency] =
+              (balances[tx.currency] ?? 0) +
+              (tx.type == TransactionType.income ? tx.amount : -tx.amount);
+        }
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children:
+                    Currency.values.map((currency) {
+                      final balance = balances[currency]!;
+                      return Column(
+                        children: [
+                          Text(
+                            '${currency.code}:',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
-                ),
+                          Text(
+                            '${balance.toStringAsFixed(2)} ${currency.symbol}',
+                            style: TextStyle(
+                              color: balance >= 0 ? Colors.green : Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
               ),
-              const Divider(),
-              Expanded(
-                child: list.isEmpty
-                    ? const Center(child: Text('No transactions'))
-                    : ListView.builder(
+            ),
+            const Divider(),
+            Expanded(
+              child:
+                  list.isEmpty
+                      ? const Center(child: Text('No transactions'))
+                      : ListView.builder(
                         itemCount: list.length,
                         itemBuilder: (context, index) {
                           final tx = list[index];
@@ -69,27 +84,24 @@ class _TransactionListPageState extends State<TransactionListPage> {
                             title: Text(
                               '${tx.type == TransactionType.income ? '+' : '-'} ${tx.amount.toStringAsFixed(2)} ${tx.currency.code}',
                               style: TextStyle(
-                                color: tx.type == TransactionType.income
-                                    ? Colors.green
-                                    : Colors.red,
+                                color:
+                                    tx.type == TransactionType.income
+                                        ? Colors.green
+                                        : Colors.red,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             subtitle: Text(tx.description ?? ''),
-                            trailing:
-                                Text('${tx.date.toLocal()}'.split(' ')[0]),
+                            trailing: Text(
+                              '${tx.date.toLocal()}'.split(' ')[0],
+                            ),
                           );
                         },
                       ),
-              ),
-            ],
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddTransactionDialog(context),
-        child: const Icon(Icons.add),
-      ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -107,7 +119,8 @@ class _TransactionListPageState extends State<TransactionListPage> {
           builder: (context, setState) {
             void checkButtonState() {
               setState(() {
-                isButtonEnabled = amountController.text.isNotEmpty &&
+                isButtonEnabled =
+                    amountController.text.isNotEmpty &&
                     descriptionController.text.isNotEmpty;
               });
             }
@@ -122,16 +135,17 @@ class _TransactionListPageState extends State<TransactionListPage> {
                 children: [
                   DropdownButton<TransactionType>(
                     value: selectedType,
-                    items: TransactionType.values.map((type) {
-                      return DropdownMenuItem(
-                        value: type,
-                        child: Text(
-                          type == TransactionType.income
-                              ? 'Income'
-                              : 'Expense',
-                        ),
-                      );
-                    }).toList(),
+                    items:
+                        TransactionType.values.map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(
+                              type == TransactionType.income
+                                  ? 'Income'
+                                  : 'Expense',
+                            ),
+                          );
+                        }).toList(),
                     onChanged: (type) {
                       if (type != null) {
                         setState(() => selectedType = type);
@@ -140,12 +154,13 @@ class _TransactionListPageState extends State<TransactionListPage> {
                   ),
                   DropdownButton<Currency>(
                     value: selectedCurrency,
-                    items: Currency.values.map((currency) {
-                      return DropdownMenuItem(
-                        value: currency,
-                        child: Text(currency.code),
-                      );
-                    }).toList(),
+                    items:
+                        Currency.values.map((currency) {
+                          return DropdownMenuItem(
+                            value: currency,
+                            child: Text(currency.code),
+                          );
+                        }).toList(),
                     onChanged: (value) {
                       if (value != null) {
                         setState(() => selectedCurrency = value);
@@ -171,25 +186,27 @@ class _TransactionListPageState extends State<TransactionListPage> {
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: isButtonEnabled
-                      ? () {
-                          final amount =
-                              double.tryParse(amountController.text);
-                          if (amount != null) {
-                            final tx = Transaction(
-                              id: DateTime.now()
-                                  .millisecondsSinceEpoch
-                                  .toString(),
-                              type: selectedType,
-                              currency: selectedCurrency,
-                              amount: amount,
-                              description: descriptionController.text,
+                  onPressed:
+                      isButtonEnabled
+                          ? () {
+                            final amount = double.tryParse(
+                              amountController.text,
                             );
-                            Hive.box<Transaction>('transactions').add(tx);
-                            Navigator.pop(context);
+                            if (amount != null) {
+                              final tx = Transaction(
+                                id:
+                                    DateTime.now().millisecondsSinceEpoch
+                                        .toString(),
+                                type: selectedType,
+                                currency: selectedCurrency,
+                                amount: amount,
+                                description: descriptionController.text,
+                              );
+                              Hive.box<Transaction>('transactions').add(tx);
+                              Navigator.pop(context);
+                            }
                           }
-                        }
-                      : null,
+                          : null,
                   child: const Text('Add'),
                 ),
               ],

@@ -41,10 +41,10 @@ extension CurrencyExtension on Currency {
 @HiveType(typeId: 1)
 enum TransactionType {
   @HiveField(0)
-  income,
+  expense,
 
   @HiveField(1)
-  expense,
+  income,
 }
 
 @HiveType(typeId: 2)
